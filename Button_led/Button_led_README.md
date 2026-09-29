@@ -88,17 +88,6 @@ void loop() {
 
 6. `if (buttonState == LOW)` — since the button is active-low, the LED is turned on when the read value is `LOW`.
 
-### ⚠️ Important: the sketch must be in a folder with the same name
-
-The Arduino IDE only accepts a sketch file inside a folder that has **exactly the same name** as the `.ino` file:
-
-```
-Button_led/
-└── Button_led.ino    ← folder name and file name must match
-```
-
-If you copy `Button_led.ino` somewhere else (for example straight into the repository root, or into a folder with a different name), the IDE will complain that the sketch file is not in the correctly named folder. Either open it from the existing `Button_led` folder, or create a new folder named `Button_led` (matching the file name) and put the `.ino` file inside it.
-
 ### Upload
 
 1. Open `Button_led/Button_led.ino` in the Arduino IDE.
@@ -107,54 +96,11 @@ If you copy `Button_led.ino` somewhere else (for example straight into the repos
 
 ---
 
-## Button_led: toggle version (press once → LED stays on)
-
-The first version only lights the LED *while* the button is held. It is also possible to make each press **toggle** the LED — press once to turn it on, press again to turn it off. This is the second extension exercise from the [Waveshare tutorial](https://docs.waveshare.com/ESP32-Arduino-Tutorials/Digital-IO#digital-io-exercise), combined with a simple debounce.
-
-```cpp
-const int ledPin = 7;  // Pin number for LED connection
-const int buttonPin = 8;  // Pin number for button connection
-
-int lastButtonState = HIGH;  // Last button status
-int ledState = LOW;          // Current LED status (LOW = off, HIGH = on)
-int currentButtonState;   // Current button status
-
-void setup() {
-  pinMode(ledPin, OUTPUT);           // Set the LED pin to output mode
-  pinMode(buttonPin, INPUT_PULLUP);  // Set the button pin to pull-up input mode
-}
-
-void loop() {
-  currentButtonState = digitalRead(buttonPin);  // Read the current state of the button
-
-  // Detect the moment the button changes from pressed to released
-  if (lastButtonState == LOW && currentButtonState == HIGH) {
-    ledState = !ledState;           // Switch LED status (on to off, off to on)
-    digitalWrite(ledPin, ledState); // Apply the new LED status
-    delay(100);                     // Debounce delay
-  }
-
-  lastButtonState = currentButtonState;  // Save the current state for the next comparison
-}
-```
-
-**How it works:**
-
-1. `int ledState = LOW;` — the LED's own state is stored in a variable, so it **stays where it was** after the button is released. This is what makes the LED "remember" whether it is on or off.
-2. `lastButtonState` / `currentButtonState` — keeping the previous reading lets you detect the *moment* the state changes, instead of reacting continuously to the level.
-3. `lastButtonState == LOW && currentButtonState == HIGH` — this is the **release edge**: the pin goes from pressed (LOW, thanks to `INPUT_PULLUP`) back to released (HIGH). Counting on release is what makes the toggle feel natural.
-4. `ledState = !ledState;` — the `!` (NOT) operator flips the value: `LOW` → `HIGH`, `HIGH` → `LOW`. One press = one toggle.
-5. `delay(100);` — **debounce**: a mechanical button bounces for a few milliseconds on release, which the fast ESP32 would otherwise read as several presses and toggle the LED multiple times. Ignoring everything for 100 ms swallows the bounces.
-
-**Running result:** upload the sketch, open nothing but the board itself — press the button once, the LED turns on and *stays* on; press it again, it turns off.
-
----
-
 ## Ideas to extend it
 
 From the tutorial's extension exercises:
 
-- ~~Toggle the LED state once for every button press~~ — done, see the [toggle version](#button_led-toggle-version-press-once--led-stays-on) above (with `delay(100)` debounce).
+- Toggle the LED state once for every button press (count presses — watch out for **button bouncing**: mechanical contacts bounce for a few milliseconds, so the ESP32 may see several "presses" from one physical press; a simple `delay(100)` after a press is detected fixes it).
 - Print the button state to the Serial Monitor with `Serial.println()`.
 
 ---
